@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Match Videos</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+  <style>
+    body {
+      background: #0b0f1a;
+      color: white;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      color: #ff4d4d;
+    }
+
+    .video-card {
+      background: #151a2d;
+      padding: 15px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.4);
+    }
+
+    video {
+      width: 100%;
+      border-radius: 10px;
+    }
+
+    .meta {
+      margin-top: 8px;
+      color: #ccc;
+    }
+  </style>
+</head>
+
+<body>
+
+<h1>🤖 Match POV Videos</h1>
+<div id="videos"></div>
+
+<script>
+  const firebaseConfig = {
+  apiKey: "AIzaSyAcElmrqJRgaB0YzxAeBzLin9uT4xhzR8s",
+  authDomain: "snuff-site.firebaseapp.com",
+  projectId: "snuff-site",
+  storageBucket: "snuff-site.firebasestorage.app",
+  messagingSenderId: "806966991651",
+  appId: "1:806966991651:web:af36f975fe36837ee70a96",
+  measurementId: "G-B4LGCTD99D"
+};
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  db.ref("videos").orderByChild("time").on("child_added", snap => {
+    const v = snap.val();
+
+    const card = document.createElement("div");
+    card.className = "video-card";
+
+    card.innerHTML = `
+      <video controls>
+        <source src="${v.url}" type="video/mp4">
+      </video>
+      <div class="meta">
+        <strong>Match ${v.match}</strong><br>
+        ${v.event || ""}<br>
+        ${new Date(v.time).toLocaleString()}
+      </div>
+    `;
+
+    document.getElementById("videos").prepend(card);
+  });
+</script>
+
+</body>
+</html>

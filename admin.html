@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Admin Panel</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0b0f1a;
+      color: white;
+      margin: 0;
+      padding: 20px;
+    }
+
+    .card {
+      background: #151a2d;
+      padding: 20px;
+      border-radius: 12px;
+      max-width: 400px;
+      margin: auto;
+      box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    }
+
+    h2 {
+      text-align: center;
+      color: #ff4d4d;
+    }
+
+    input, select, button {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      border-radius: 6px;
+      border: none;
+      font-size: 1em;
+    }
+
+    button {
+      background: #ff4d4d;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover {
+      opacity: 0.9;
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="card" id="login">
+  <h2>Admin Login</h2>
+  <input type="password" id="pin" placeholder="Enter PIN" />
+  <button onclick="checkPin()">Login</button>
+</div>
+
+<div class="card hidden" id="panel">
+  <h2>Control Panel</h2>
+  
+  <hr style="margin:20px 0">
+
+<h3>Upload Match Video</h3>
+
+<input type="file" id="videoFile" accept="video/*" />
+<input type="text" id="eventName" placeholder="Event name (ex: Qualifier 1)" />
+<button onclick="uploadVideo()">Upload Video</button>
+
+<p id="uploadStatus"></p>
+
+
+  <label>Status</label>
+  <select id="status">
+    <option value="Idle">Idle</option>
+    <option value="Queue">Queue</option>
+    <option value="Field">Field</option>
+  </select>
+
+  <label>Match #</label>
+  <input type="number" id="match" />
+
+  <label>Our Score</label>
+  <input type="number" id="us" />
+
+  <label>Their Score</label>
+  <input type="number" id="them" />
+
+  <button onclick="updateCurrent()">Update Live</button>
+  <button onclick="saveMatch()">Save Match to History</button>
+</div>
+
+<script>
+  // 🔥 CHANGE THIS PIN
+  const ADMIN_PIN = "0001";
+
+  // 🔥 YOUR FIREBASE CONFIG
+ const firebaseConfig = {
+  apiKey: "AIzaSyAcElmrqJRgaB0YzxAeBzLin9uT4xhzR8s",
+  authDomain: "snuff-site.firebaseapp.com",
+  projectId: "snuff-site",
+  storageBucket: "snuff-site.firebasestorage.app",
+  messagingSenderId: "806966991651",
+  appId: "1:806966991651:web:af36f975fe36837ee70a96",
+  measurementId: "G-B4LGCTD99D"
+};
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  function checkPin() {
+    if (document.getElementById("pin").value === ADMIN_PIN) {
+      document.getElementById("login").classList.add("hidden");
+      document.getElementById("panel").classList.remove("hidden");
+      loadCurrent();
+    } else {
+      alert("Wrong PIN");
+    }
+  }
+
+  function loadCurrent() {
+    db.ref("current").once("value", snap => {
+      if (!snap.exists()) return;
+      const d = snap.val();
+      document.getElementById("match").value = d.match;
+      document.getElementById("us").value = d.us;
+      document.getElementById("them").value = d.them;
+    });
+
+    db.ref("status").once("value", snap => {
+      document.getElementById("status").value = snap.val();
+    });
+  }
+
+  function updateCurrent() {
+    db.ref("status").set(
+      document.getElementById("status").value
+    );
+
+    db.ref("current").set({
+      match: Number(document.getElementById("match").value),
+      us: Number(document.getElementById("us").value),
+      them: Number(document.getElementById("them").value)
+    });
+
+    alert("Live data updated");
+  }
+
+  function saveMatch() {
+    const match = Number(document.getElementById("match").value);
+    const us = Number(document.getElementById("us").value);
+    const them = Number(document.getElementById("them").value);
+
+    const result = us > them ? "W" : us < them ? "L" : "T";
+
+    db.ref("history").push({
+      match,
+      us,
+      them,
+      result,
+      time: Date.now()
+    });
+
+    alert("Match saved");
+  }
+  
+
+  const storage = firebase.storage();
+
+  function uploadVideo() {
+    const file = document.getElementById("videoFile").files[0];
+    const eventName = document.getElementById("eventName").value;
+    const match = Number(document.getElementById("match").value);
+
+    if (!file) {
+      alert("Select a video file");
+      return;
+    }
+
+    const filePath = `videos/match_${match}_${Date.now()}.mp4`;
+    const ref = storage.ref(filePath);
+
+    document.getElementById("uploadStatus").textContent = "Uploading...";
+
+    ref.put(file).then(snapshot => {
+      return snapshot.ref.getDownloadURL();
+    }).then(url => {
+      return firebase.database().ref("videos").push({
+        match,
+        event: eventName,
+        url,
+        time: Date.now()
+      });
+    }).then(() => {
+      document.getElementById("uploadStatus").textContent = "Upload complete ✅";
+      document.getElementById("videoFile").value = "";
+      document.getElementById("eventName").value = "";
+    }).catch(err => {
+      alert(err.message);
+    });
+  }
+
+</script>
+
+</body>
+</html>
