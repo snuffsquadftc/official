@@ -217,6 +217,20 @@
     });
   }
 
+  function postFieldUpdate() {
+  const text = document.getElementById("updateText").value.trim();
+  if (!text) return alert("Enter an update");
+
+  firebase.database().ref("fieldUpdates").push({
+    text: text,
+    time: Date.now()
+  });
+
+  document.getElementById("updateText").value = "";
+  alert("Update posted!");
+}
+
+
 </script>
 
 </body>
