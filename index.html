@@ -311,12 +311,45 @@
 
   
 </footer>
+  <!-- Firebase for Updates -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
 <script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyAcElmrqJRgaB0YzxAeBzLin9uT4xhzR8s",
+    authDomain: "snuff-site.firebaseapp.com",
+    projectId: "snuff-site",
+    storageBucket: "snuff-site.firebasestorage.app",
+    messagingSenderId: "806966991651",
+    appId: "1:806966991651:web:af36f975fe36837ee70a96"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  const updatesRef = db.ref("fieldUpdates");
+
+  updatesRef.limitToLast(20).on("value", snap => {
+    const container = document.getElementById("updatesContainer");
+    container.innerHTML = "";
+
+    const updates = [];
+    snap.forEach(child => updates.push(child.val()));
+    updates.reverse();
+
+    updates.forEach(u => {
+      const div = document.createElement("div");
+      div.className = "update-card";
+      div.textContent = u.text;
+      container.appendChild(div);
+    });
+  })
   alert("Website currently in development. There are some bugs and filler code, but feel free to explore! Report a bug at snuff.squad.ftc@gmail.com");
   function aipre() {
-    alert("Predicting match results...")
-    alert("Match results predicted!")
-    alert("Snuff Squad will win 1ST place with a total score of 1,000,000,000,000,000,000,000,000,000 points!"
+    alert("Predicting match results...");
+    alert("Match results predicted!");
+    alert("Snuff Squad will win 1ST place with a total score of 1,000,000,000,000,000,000,000,000,000 points!");
 </script>
 </body>
 </html>
